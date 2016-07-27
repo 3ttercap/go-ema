@@ -9,28 +9,41 @@ import (
 )
 
 func main() {
-	sum := 0.0
-	values := make([]float64, 100, 100)
-
 	rand.Seed(time.Now().UnixNano())
+	sum := 0.0
+	duration := 1000 * time.Millisecond
+	windowSize := 10.0
 
-	ema1, err := ema.NewExpMovingAverage(10*time.Millisecond, time.Millisecond, 0.0)
+	avg := 0.0
+	// keep track of last 10ms
+	ema1, err := ema.NewExpMovingAverage(time.Duration(windowSize)*time.Millisecond, 0.0)
 	if err != nil {
 		panic(err)
 	}
 
-	avg := 0.0
-	for i := range values {
+	now := time.Now()
+	// run for almost 15 ms
+
+	for time.Since(now) < duration {
 		time.Sleep(time.Millisecond)
 		num := float64(rand.Int() % 100)
-
 		avg = ema1.Add(num)
-		if i >= len(values)-10 {
+		if duration-time.Since(now) < time.Duration(windowSize)*time.Millisecond {
 			sum += num
-			fmt.Println(">>", i, num, sum, ">>>>>>>>", avg)
 		}
 	}
 
-	fmt.Println("===========================")
-	fmt.Println(avg, "~=", sum/10)
+	fmt.Println(avg, "~=", sum/windowSize)
+
+	//////
+
+	fmt.Println("============")
+	em, err := ema.NewExpMovingAverage(10*time.Millisecond, 0.0)
+
+	for i := 1.0; i <= 100; i++ {
+		time.Sleep(1 * time.Millisecond)
+		avg = em.Add(i)
+	}
+
+	fmt.Println(em.Get())
 }
